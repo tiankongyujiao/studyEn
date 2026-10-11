@@ -1,0 +1,31 @@
+<view class="page">
+  <view class="card hero">
+    <view class="hero-num">{{total}}</view>
+    <view class="hero-label">总词汇量</view>
+    <view class="hero-status" wx:if="{{!synced}}">{{hasLocal ? '云端同步中…' : '正在从云端加载…'}}</view>
+  </view>
+
+  <view class="section-title">掌握情况</view>
+  <view class="card-list">
+    <view class="card level-card" wx:for="{{levels}}" wx:key="id" hover-class="card-hover"
+          data-level="{{item.id}}" bindtap="goList">
+      <view class="level-row">
+        <text class="level-name" style="color: {{item.color}}">{{item.name}}</text>
+        <text class="level-count">{{counts[index]}}</text>
+      </view>
+      <view class="bar">
+        <view class="bar-fill" style="width: {{percents[index]}}%; background: {{item.color}}"></view>
+      </view>
+      <view class="level-pct">{{percents[index]}}%</view>
+    </view>
+  </view>
+
+  <view class="card empty-card" wx:if="{{synced && total === 0}}">
+    还没有记录。点下面的「记单词」一个个加，或用「批量导入」把笔记本上的存量单词一次贴进来。
+  </view>
+
+  <view class="actions">
+    <view class="btn btn-primary" bindtap="goAdd">记单词</view>
+    <view class="btn btn-plain" bindtap="goImport">批量导入</view>
+  </view>
+</view>

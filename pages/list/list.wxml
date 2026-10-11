@@ -1,0 +1,55 @@
+<view class="page">
+  <view class="topbar">
+    <view class="searchbar">
+      <input class="search-input" placeholder="搜索单词 / 释义" value="{{keyword}}"
+             confirm-type="search" bindinput="onSearch" />
+      <view class="search-clear" wx:if="{{keyword}}" catchtap="clearSearch">×</view>
+    </view>
+    <scroll-view scroll-x scroll-with-animation class="tabs">
+      <view class="tab {{current === item.id ? 'active' : ''}}" wx:for="{{tabs}}" wx:key="id"
+            data-id="{{item.id}}" bindtap="switchTab">
+        {{item.name}}<text class="tab-count">{{tabCounts[index]}}</text>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="list-meta" wx:if="{{matched > 0}}">
+    共 {{matched}} 个单词{{hasMore ? '（上拉加载更多）' : ''}}
+  </view>
+
+  <view class="list">
+    <view class="item" wx:for="{{items}}" wx:key="_id" hover-class="item-hover"
+          data-id="{{item._id}}" bindtap="onItemTap">
+      <view class="item-main">
+        <view class="item-word">{{item.word}}</view>
+        <view class="item-meaning" wx:if="{{item.meaning}}">{{item.meaning}}</view>
+      </view>
+      <view class="tag" style="color: {{item.levelColor}}; background: {{item.levelBg}}">{{item.levelName}}</view>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{matched === 0}}">
+    {{keyword ? '没有匹配「' + keyword + '」的单词' : '这个分类还没有单词，点右下角加号添加'}}
+  </view>
+
+  <view class="fab" bindtap="onFabTap">＋</view>
+
+  <view class="mask" wx:if="{{showForm}}" bindtap="closeForm">
+    <view class="form" catchtap="noop">
+      <view class="form-title">{{formTitle}}</view>
+      <input class="form-input" placeholder="单词，如 apple" value="{{formWord}}"
+             focus="{{wordFocus}}" bindinput="onFormWord" />
+      <input class="form-input" placeholder="中文释义（可选），如 苹果" value="{{formMeaning}}"
+             bindinput="onFormMeaning" />
+      <view class="form-label">分类（点选）</view>
+      <view class="chips">
+        <view class="chip" wx:for="{{levels}}" wx:key="id" data-level="{{item.id}}" bindtap="pickFormLevel"
+              style="{{formLevel === item.id ? 'background:' + item.color + ';border-color:' + item.color + ';color:#fff' : 'color:' + item.color + ';border-color:' + item.color}}">{{item.name}}</view>
+      </view>
+      <view class="form-actions">
+        <view class="form-btn" bindtap="closeForm">取消</view>
+        <view class="form-btn form-btn-primary" bindtap="submitForm">保存</view>
+      </view>
+    </view>
+  </view>
+</view>

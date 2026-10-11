@@ -1,0 +1,43 @@
+page {
+  background: #f5f6f7;
+  font-size: 28rpx;
+  color: #323233;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16rpx;
+  margin: 20rpx 24rpx;
+  padding: 28rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
+}
+
+.btn {
+  border-radius: 12rpx;
+  text-align: center;
+  padding: 22rpx 0;
+  font-size: 30rpx;
+}
+
+.btn-primary {
+  background: #07c160;
+  color: #fff;
+}
+
+.btn-plain {
+  background: #fff;
+  color: #07c160;
+  border: 2rpx solid #07c160;
+}
+
+.chip {
+  display: inline-block;
+  padding: 10rpx 28rpx;
+  border-radius: 999rpx;
+  border: 2rpx solid #dcdee0;
+  color: #646566;
+  font-size: 26rpx;
+  margin: 0 16rpx 16rpx 0;
+  background: #fff;
+  line-height: 1.4;
+}

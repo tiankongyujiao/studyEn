@@ -1,0 +1,9 @@
+{
+  "desc": "个人自用体验版，无需被索引",
+  "rules": [
+    {
+      "action": "disallow",
+      "page": "*"
+    }
+  ]
+}

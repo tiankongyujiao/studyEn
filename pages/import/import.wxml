@@ -1,0 +1,43 @@
+<view class="page">
+  <view class="card">
+    <view class="card-title">粘贴单词</view>
+    <view class="hint">每行一个或多个单词，逗号或换行分隔；单词后可跟中文释义（空格分隔或不加空格都行）。</view>
+    <view class="hint example"><text>apple, book, cat
+dog 狗
+ice cream 冰淇淋</text></view>
+    <textarea class="import-area" value="{{text}}" bindinput="onText" maxlength="100000"
+              placeholder="apple, book, cat, dog 狗" />
+  </view>
+
+  <view class="card">
+    <view class="card-title">导入到哪个分类</view>
+    <view class="chips">
+      <view class="chip" wx:for="{{levels}}" wx:key="id" data-level="{{item.id}}" bindtap="pickLevel"
+            style="{{level === item.id ? 'background:' + item.color + ';border-color:' + item.color + ';color:#fff' : 'color:' + item.color + ';border-color:' + item.color}}">{{item.name}}</view>
+    </view>
+  </view>
+
+  <view class="btn btn-primary parse-btn" bindtap="doParse">解析预览</view>
+
+  <view class="card" wx:if="{{preview}}">
+    <view class="card-title">解析结果</view>
+    <view class="preview-summary">
+      新增 {{preview.newCount}} 个 · 已存在 {{preview.dupCount}} 个
+      <text wx:if="{{preview.invalid.length}}"> · 无法识别 {{preview.invalid.length}} 行</text>
+    </view>
+    <view class="invalid-list" wx:if="{{preview.invalid.length}}">
+      无法识别：{{preview.invalidText}}
+    </view>
+    <view class="preview-list">
+      <view class="preview-item {{item.dup ? 'dup' : ''}}" wx:for="{{preview.shown}}" wx:key="word">
+        <text>{{item.word}}</text>
+        <text class="preview-meaning" wx:if="{{item.meaning}}">{{item.meaning}}</text>
+        <text class="preview-mark">{{item.dup ? '已存在' : ''}}</text>
+      </view>
+    </view>
+    <view class="hidden-tip" wx:if="{{preview.hidden > 0}}">…还有 {{preview.hidden}} 个未显示（导入不受影响）</view>
+    <view class="btn btn-primary import-btn" wx:if="{{preview.newCount > 0}}" bindtap="doImport">
+      确认导入 {{preview.newCount}} 个
+    </view>
+  </view>
+</view>
