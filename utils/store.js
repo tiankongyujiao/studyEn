@@ -8,6 +8,8 @@ var LEVELS = [
 
 var COLLECTION = 'words'
 var CACHE_KEY = 'words_cache'
+var LOG_COLLECTION = 'logs'
+var LOGS_CACHE_KEY = 'logs_cache'
 var FETCH_PAGE = 20
 var FETCH_CONCURRENCY = 10
 var IMPORT_CONCURRENCY = 20
@@ -15,6 +17,9 @@ var IMPORT_CONCURRENCY = 20
 var words = []
 var localLoaded = false
 var synced = false
+var logs = []
+var logsLocalLoaded = false
+var logsSynced = false
 
 function levelInfo(id) {
   for (var i = 0; i < LEVELS.length; i++) {
@@ -29,6 +34,10 @@ function normalize(w) {
 
 function db() {
   return wx.cloud.database().collection(COLLECTION)
+}
+
+function logDb() {
+  return wx.cloud.database().collection(LOG_COLLECTION)
 }
 
 function persist() {
@@ -89,6 +98,7 @@ async function loadWords() {
       wordLower: d.wordLower,
       meaning: d.meaning || '',
       level: d.level,
+      reviewCount: d.reviewCount || 0,
       createdAt: d.createdAt,
       updatedAt: d.updatedAt
     }
@@ -99,8 +109,128 @@ async function loadWords() {
   return words
 }
 
+// ---------- 分类移动日志（独立 logs 集合）----------
+
+function persistLogs() {
+  try {
+    wx.setStorageSync(LOGS_CACHE_KEY, logs)
+  } catch (e) {
+    // 同 words：缓存写失败可忽略，云端是完整数据
+  }
+  logsLocalLoaded = true
+}
+
+function ensureLogsLocal() {
+  if (!logsLocalLoaded) {
+    try {
+      logs = wx.getStorageSync(LOGS_CACHE_KEY) || []
+    } catch (e) {
+      logs = []
+    }
+    logsLocalLoaded = true
+  }
+  return logs
+}
+
+async function fetchLogs() {
+  var total = (await logDb().count()).total
+  var pages = Math.ceil(total / FETCH_PAGE)
+  var all = []
+  for (var b = 0; b < pages; b += FETCH_CONCURRENCY) {
+    var requests = []
+    var end = Math.min(b + FETCH_CONCURRENCY, pages)
+    for (var i = b; i < end; i++) {
+      requests.push(logDb().orderBy('ts', 'desc').skip(i * FETCH_PAGE).limit(FETCH_PAGE).get())
+    }
+    var results = await Promise.all(requests)
+    results.forEach(function (r) { all = all.concat(r.data) })
+  }
+  var seen = {}
+  var unique = []
+  all.forEach(function (d) {
+    if (!seen[d._id]) { seen[d._id] = true; unique.push(d) }
+  })
+  return unique
+}
+
+async function loadLogs() {
+  var data = await fetchLogs()
+  logs = data.map(function (d) {
+    return { _id: d._id, wordLower: d.wordLower, from: d.from, to: d.to, ts: d.ts }
+  })
+  logsLocalLoaded = true
+  logsSynced = true
+  persistLogs()
+  return logs
+}
+
+// 记一笔移动日志。fire-and-forget：logs 集合未创建等问题不能影响移动本身
+function logMove(wordLower, from, to) {
+  var doc = { wordLower: wordLower, from: from, to: to, ts: Date.now() }
+  logDb().add({ data: doc })
+    .then(function (res) {
+      logs.push(Object.assign({ _id: res._id }, doc))
+      persistLogs()
+    })
+    .catch(function (e) {
+      console.warn('移动日志写入失败（logs 集合可能未创建）', e)
+    })
+}
+
+// 三窗口（7/15/30 天）分类流动，按"净变化"统计：
+// 窗口内同一单词移走又移回的往返对冲清零（含绕路回原点），
+// 每个词每窗口最多计一笔——首条日志的 from → 末条日志的 to
+function flowStats() {
+  ensureLogsLocal()
+  var day = 24 * 3600 * 1000
+  var now = Date.now()
+  var windows = [7, 15, 30]
+  var up = [0, 0, 0]
+  var down = [0, 0, 0]
+  var pairMap = {}
+
+  var valid = []
+  logs.forEach(function (l) {
+    if (!l || !l.ts || !l.from || !l.to || l.from === l.to) return
+    valid.push(l)
+  })
+  valid.sort(function (a, b) { return a.ts - b.ts })
+
+  windows.forEach(function (days, wi) {
+    var cutoff = now - days * day
+    var net = {}
+    valid.forEach(function (l) {
+      if (l.ts < cutoff) return
+      var n = net[l.wordLower]
+      if (n) {
+        n.to = l.to
+      } else {
+        net[l.wordLower] = { from: l.from, to: l.to }
+      }
+    })
+    for (var w in net) {
+      var n = net[w]
+      if (n.from === n.to) continue
+      var key = n.from + '-' + n.to
+      if (!pairMap[key]) pairMap[key] = { from: n.from, to: n.to, counts: [0, 0, 0] }
+      pairMap[key].counts[wi]++
+      if (n.to < n.from) up[wi]++
+      else down[wi]++
+    }
+  })
+
+  var pairs = []
+  for (var k in pairMap) pairs.push(pairMap[k])
+  pairs.sort(function (a, b) { return b.counts[2] - a.counts[2] })
+  return { up: up, down: down, pairs: pairs }
+}
+
 function isSynced() {
   return synced
+}
+
+function isLogsSynced() {
+  return logsSynced
 }
 
 function hasLocal() {
@@ -129,6 +259,25 @@ function query(keyword, level) {
   })
 }
 
+// 最近录入统计：7/15/30 天滚动窗口 × 当前分类
+function recentStats() {
+  ensureLocal()
+  var day = 24 * 3600 * 1000
+  var now = Date.now()
+  var week = [0, 0, 0, 0]
+  var half = [0, 0, 0, 0]
+  var month = [0, 0, 0, 0]
+  words.forEach(function (w) {
+    var lv = w.level
+    if (lv < 1 || lv > 4) return
+    var age = now - (w.createdAt || 0)
+    if (age <= 30 * day) month[lv - 1]++
+    if (age <= 15 * day) half[lv - 1]++
+    if (age <= 7 * day) week[lv - 1]++
+  })
+  return { week: week, half: half, month: month }
+}
+
 function findConflict(key, excludeId) {
   for (var i = 0; i < words.length; i++) {
     if (words[i]._id !== excludeId && words[i].wordLower === key) return words[i]
@@ -148,6 +297,7 @@ async function addWord(input) {
     wordLower: key,
     meaning: String(input.meaning || '').trim(),
     level: input.level,
+    reviewCount: 0,
     createdAt: now,
     updatedAt: now
   }
@@ -177,7 +327,11 @@ async function updateWord(id, patch) {
     updatedAt: Date.now()
   }
   await db().doc(id).update({ data: data })
+  var oldLevel = rec.level
   Object.assign(rec, data)
+  if (data.level !== oldLevel) {
+    logMove(rec.wordLower, oldLevel, data.level)
+  }
   persist()
   return { ok: true, record: rec }
 }
@@ -191,6 +345,20 @@ async function deleteWord(id) {
   words = words.filter(function (w) { return w._id !== id })
   persist()
   return { ok: true }
+}
+
+// 会默写单词记一次复习，次数 +1
+async function reviewWord(id) {
+  var rec = null
+  for (var i = 0; i < words.length; i++) {
+    if (words[i]._id === id) { rec = words[i]; break }
+  }
+  if (!rec) return { ok: false, error: 'notfound' }
+  var count = (rec.reviewCount || 0) + 1
+  await db().doc(id).update({ data: { reviewCount: count } })
+  rec.reviewCount = count
+  persist()
+  return { ok: true, count: count }
 }
 
 // 解析批量粘贴文本：按换行/逗号/分号切段，段内"英文 中文"拆出释义
@@ -237,6 +405,7 @@ async function importWords(items, level) {
       wordLower: key,
       meaning: String(it.meaning || '').trim(),
       level: level,
+      reviewCount: 0,
       createdAt: now,
       updatedAt: now
     })
@@ -270,15 +439,20 @@ module.exports = {
   normalize: normalize,
   ensureLocal: ensureLocal,
   loadWords: loadWords,
+  loadLogs: loadLogs,
   isSynced: isSynced,
+  isLogsSynced: isLogsSynced,
+  flowStats: flowStats,
   hasLocal: hasLocal,
   all: ensureLocal,
   stats: stats,
   query: query,
+  recentStats: recentStats,
   addWord: addWord,
   updateWord: updateWord,
   moveWord: moveWord,
   deleteWord: deleteWord,
+  reviewWord: reviewWord,
   parseImportText: parseImportText,
   importWords: importWords
 }

@@ -6,13 +6,23 @@ Page({
     counts: [0, 0, 0, 0],
     percents: [0, 0, 0, 0],
     total: 0,
+    recentRows: [],
+    flowUp: [0, 0, 0],
+    flowDown: [0, 0, 0],
+    flowRows: [],
+    activeTab: 0,
     synced: false,
     hasLocal: false
   },
 
+  onTabTap: function (e) {
+    var t = +e.currentTarget.dataset.tab
+    if (t !== this.data.activeTab) this.setData({ activeTab: t })
+  },
+
   onShow: function () {
     this.refresh()
-    if (!store.isSynced()) this.sync()
+    if (!store.isSynced() || !store.isLogsSynced()) this.sync()
   },
 
   onPullDownRefresh: function () {
@@ -24,10 +34,35 @@ Page({
     var percents = s.counts.map(function (c) {
       return s.total > 0 ? Math.round(c * 100 / s.total) : 0
     })
+    var r = store.recentStats()
+    var recentRows = store.LEVELS.map(function (l, i) {
+      return {
+        id: l.id,
+        name: l.name,
+        color: l.color,
+        week: r.week[i],
+        half: r.half[i],
+        month: r.month[i]
+      }
+    })
+    var f = store.flowStats()
+    var flowRows = f.pairs.map(function (p) {
+      return {
+        key: p.from + '-' + p.to,
+        fromName: store.levelInfo(p.from).name,
+        toName: store.levelInfo(p.to).name,
+        up: p.to < p.from,
+        counts: p.counts
+      }
+    })
     this.setData({
       counts: s.counts,
       percents: percents,
       total: s.total,
+      recentRows: recentRows,
+      flowUp: f.up,
+      flowDown: f.down,
+      flowRows: flowRows,
       synced: store.isSynced(),
       hasLocal: store.hasLocal()
     })
@@ -35,7 +70,12 @@ Page({
 
   sync: function (fromPull) {
     var that = this
-    store.loadWords()
+    var tasks = [store.loadWords()]
+    if (!store.isLogsSynced()) {
+      // 日志加载失败静默处理，流动卡显示 0 即可，不影响主流程
+      tasks.push(store.loadLogs().catch(function () { return null }))
+    }
+    Promise.all(tasks)
       .then(function () {
         if (fromPull) wx.stopPullDownRefresh()
         that.refresh()

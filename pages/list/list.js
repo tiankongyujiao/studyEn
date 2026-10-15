@@ -3,6 +3,14 @@ const store = require('../../utils/store')
 var TABS = [{ id: 0, name: '全部' }].concat(store.LEVELS)
 var PAGE_SIZE = 100
 
+function formatTime(ts) {
+  if (!ts) return ''
+  var d = new Date(ts)
+  var pad = function (n) { return n < 10 ? '0' + n : '' + n }
+  var md = pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes())
+  return d.getFullYear() !== new Date().getFullYear() ? d.getFullYear() + '-' + md : md
+}
+
 Page({
   data: {
     tabs: TABS,
@@ -85,7 +93,8 @@ Page({
         return Object.assign({}, w, {
           levelName: info.name,
           levelColor: info.color,
-          levelBg: info.bg
+          levelBg: info.bg,
+          timeText: formatTime(w.updatedAt || w.createdAt)
         })
       }),
       matched: list.length,
@@ -120,14 +129,42 @@ Page({
     })
     if (!rec) return
     var that = this
+    var canReview = rec.level === 1
+    var actions = canReview
+      ? ['记一次复习', '修改', '移动分类', '删除']
+      : ['修改', '移动分类', '删除']
     wx.showActionSheet({
-      itemList: ['修改', '移动分类', '删除'],
+      itemList: actions,
       success: function (res) {
-        if (res.tapIndex === 0) that.openForm(rec)
-        else if (res.tapIndex === 1) that.pickMove(rec)
-        else if (res.tapIndex === 2) that.confirmDelete(rec)
+        var i = res.tapIndex
+        if (canReview) {
+          if (i === 0) {
+            that.doReview(rec)
+            return
+          }
+          i--
+        }
+        if (i === 0) that.openForm(rec)
+        else if (i === 1) that.pickMove(rec)
+        else if (i === 2) that.confirmDelete(rec)
       }
     })
+  },
+
+  doReview: function (rec) {
+    var that = this
+    store.reviewWord(rec._id)
+      .then(function (r) {
+        if (r.ok) {
+          wx.showToast({ title: '已复习 ' + r.count + ' 次', icon: 'none' })
+          that.filter()
+        } else {
+          wx.showToast({ title: '记录失败', icon: 'none' })
+        }
+      })
+      .catch(function () {
+        wx.showToast({ title: '记录失败', icon: 'none' })
+      })
   },
 
   pickMove: function (rec) {

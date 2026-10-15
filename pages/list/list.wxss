@@ -85,10 +85,23 @@
   min-width: 0;
 }
 
+.item-word-row {
+  display: flex;
+  align-items: baseline;
+}
+
 .item-word {
   font-size: 32rpx;
   font-weight: 600;
   word-break: break-all;
+}
+
+.review-badge {
+  font-size: 22rpx;
+  color: #07c160;
+  margin-left: 10rpx;
+  font-weight: 500;
+  flex-shrink: 0;
 }
 
 .item-meaning {
@@ -97,12 +110,24 @@
   margin-top: 4rpx;
 }
 
-.tag {
+.item-time {
+  font-size: 20rpx;
+  color: #c8c9cc;
+  margin-bottom: 4rpx;
+}
+
+.item-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   flex-shrink: 0;
+  margin-left: 20rpx;
+}
+
+.tag {
   font-size: 22rpx;
   padding: 6rpx 18rpx;
   border-radius: 999rpx;
-  margin-left: 20rpx;
 }
 
 .empty {

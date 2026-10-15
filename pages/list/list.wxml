@@ -21,10 +21,16 @@
     <view class="item" wx:for="{{items}}" wx:key="_id" hover-class="item-hover"
           data-id="{{item._id}}" bindtap="onItemTap">
       <view class="item-main">
-        <view class="item-word">{{item.word}}</view>
+        <view class="item-word-row">
+          <text class="item-word">{{item.word}}</text>
+          <text class="review-badge" wx:if="{{item.level === 1 && item.reviewCount > 0}}">×{{item.reviewCount}}</text>
+        </view>
         <view class="item-meaning" wx:if="{{item.meaning}}">{{item.meaning}}</view>
       </view>
-      <view class="tag" style="color: {{item.levelColor}}; background: {{item.levelBg}}">{{item.levelName}}</view>
+      <view class="item-side">
+        <view class="item-time" wx:if="{{item.timeText}}">{{item.timeText}}</view>
+        <view class="tag" style="color: {{item.levelColor}}; background: {{item.levelBg}}">{{item.levelName}}</view>
+      </view>
     </view>
   </view>
 
