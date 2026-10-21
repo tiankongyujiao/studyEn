@@ -48,6 +48,10 @@
       <view class="form-title">{{formTitle}}</view>
       <input class="form-input" placeholder="单词，如 apple" value="{{formWord}}"
              focus="{{wordFocus}}" bindinput="onFormWord" />
+      <scroll-view class="sug" scroll-x wx:if="{{suggestions.length}}">
+        <view class="sug-item" wx:for="{{suggestions}}" wx:key="*this"
+              data-word="{{item}}" bindtap="pickSuggestion">{{item}}</view>
+      </scroll-view>
       <input class="form-input" placeholder="中文释义（可选），如 苹果" value="{{formMeaning}}"
              bindinput="onFormMeaning" />
       <view class="form-label">分类（点选）</view>

@@ -1,7 +1,34 @@
 const store = require('../../utils/store')
+const dict = require('../../utils/dict')
 
 var TABS = [{ id: 0, name: '全部' }].concat(store.LEVELS)
 var PAGE_SIZE = 100
+var SUGGEST_LIMIT = 6
+var SUGGEST_EXISTING = 3
+
+// 输入联想：优先展示已录入的同前缀单词（顺便防重复），不足的部分用内置词表补足
+function buildSuggestions(value) {
+  var v = String(value || '').trim().toLowerCase()
+  if (!v) return []
+  var seen = {}
+  var out = []
+  var all = store.all()
+  for (var i = 0; i < all.length; i++) {
+    var w = all[i]
+    if (w.wordLower === v) return []
+    if (out.length >= SUGGEST_EXISTING || seen[w.wordLower]) continue
+    if (w.wordLower.indexOf(v) !== 0) continue
+    seen[w.wordLower] = true
+    out.push(w.word)
+  }
+  var rest = dict.suggest(v, SUGGEST_LIMIT * 3)
+  for (var j = 0; j < rest.length && out.length < SUGGEST_LIMIT; j++) {
+    if (rest[j] === v || seen[rest[j]]) continue
+    seen[rest[j]] = true
+    out.push(rest[j])
+  }
+  return out
+}
 
 function formatTime(ts) {
   if (!ts) return ''
@@ -28,6 +55,7 @@ Page({
     formMeaning: '',
     formLevel: 1,
     wordFocus: false,
+    suggestions: [],
     hideMeaning: false
   },
 
@@ -229,7 +257,8 @@ Page({
         formWord: rec.word,
         formMeaning: rec.meaning || '',
         formLevel: rec.level,
-        wordFocus: false
+        wordFocus: false,
+        suggestions: []
       })
     } else {
       var level = this.data.current >= 1 && this.data.current <= 4 ? this.data.current : 1
@@ -240,18 +269,24 @@ Page({
         formWord: '',
         formMeaning: '',
         formLevel: level,
-        wordFocus: true
+        wordFocus: true,
+        suggestions: []
       })
     }
   },
 
   closeForm: function () {
-    this.setData({ showForm: false })
+    this.setData({ showForm: false, suggestions: [] })
     this.submittingFlag = false
   },
 
   onFormWord: function (e) {
-    this.setData({ formWord: e.detail.value })
+    var v = e.detail.value
+    this.setData({ formWord: v, suggestions: buildSuggestions(v) })
+  },
+
+  pickSuggestion: function (e) {
+    this.setData({ formWord: e.currentTarget.dataset.word, suggestions: [] })
   },
 
   onFormMeaning: function (e) {
@@ -283,7 +318,7 @@ Page({
           that.closeForm()
         } else {
           // 连续录入：清空字段、保持弹层、重新聚焦
-          that.setData({ formWord: '', formMeaning: '', wordFocus: false })
+          that.setData({ formWord: '', formMeaning: '', wordFocus: false, suggestions: [] })
           setTimeout(function () { that.setData({ wordFocus: true }) }, 80)
         }
         that.filter()
