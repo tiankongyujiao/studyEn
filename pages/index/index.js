@@ -7,8 +7,8 @@ Page({
     percents: [0, 0, 0, 0],
     total: 0,
     recentRows: [],
-    flowUp: [0, 0, 0],
-    flowDown: [0, 0, 0],
+    flowUp: [0, 0, 0, 0],
+    flowDown: [0, 0, 0, 0],
     flowRows: [],
     activeTab: 0,
     synced: false,
@@ -40,6 +40,7 @@ Page({
         id: l.id,
         name: l.name,
         color: l.color,
+        today: r.today[i],
         week: r.week[i],
         half: r.half[i],
         month: r.month[i]
@@ -97,5 +98,9 @@ Page({
 
   goImport: function () {
     wx.navigateTo({ url: '/pages/import/import' })
+  },
+
+  goStat: function () {
+    wx.navigateTo({ url: '/pages/stat/stat' })
   }
 })

@@ -1,9 +1,12 @@
 <view class="page">
   <view class="topbar">
-    <view class="searchbar">
-      <input class="search-input" placeholder="搜索单词 / 释义" value="{{keyword}}"
-             confirm-type="search" bindinput="onSearch" />
-      <view class="search-clear" wx:if="{{keyword}}" catchtap="clearSearch">×</view>
+    <view class="topbar-row">
+      <view class="searchbar">
+        <input class="search-input" placeholder="搜索单词 / 释义" value="{{keyword}}"
+               confirm-type="search" bindinput="onSearch" />
+        <view class="search-clear" wx:if="{{keyword}}" catchtap="clearSearch">×</view>
+      </view>
+      <view class="meaning-toggle {{hideMeaning ? 'off' : ''}}" bindtap="toggleMeaning">{{hideMeaning ? '显示释义' : '隐藏释义'}}</view>
     </view>
     <scroll-view scroll-x scroll-with-animation class="tabs">
       <view class="tab {{current === item.id ? 'active' : ''}}" wx:for="{{tabs}}" wx:key="id"
@@ -25,7 +28,7 @@
           <text class="item-word">{{item.word}}</text>
           <text class="review-badge" wx:if="{{item.level === 1 && item.reviewCount > 0}}">×{{item.reviewCount}}</text>
         </view>
-        <view class="item-meaning" wx:if="{{item.meaning}}">{{item.meaning}}</view>
+        <view class="item-meaning" wx:if="{{item.meaning && !hideMeaning}}">{{item.meaning}}</view>
       </view>
       <view class="item-side">
         <view class="item-time" wx:if="{{item.timeText}}">{{item.timeText}}</view>

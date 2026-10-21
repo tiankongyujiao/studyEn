@@ -1,0 +1,169 @@
+.page {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  background: #f5f6f7;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 24rpx;
+  background: #fff;
+  border-bottom: 1rpx solid #f0f1f2;
+}
+
+.picker {
+  display: flex;
+  align-items: center;
+  padding: 10rpx 24rpx;
+  border-radius: 999rpx;
+  background: #e6f7ee;
+  color: #07c160;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.picker-arrow {
+  margin-left: 8rpx;
+  font-size: 22rpx;
+}
+
+.mode {
+  display: flex;
+  align-items: center;
+}
+
+.mode-label {
+  font-size: 26rpx;
+  color: #646566;
+  margin-right: 6rpx;
+}
+
+.mode switch {
+  transform: scale(0.8);
+}
+
+.count {
+  font-size: 26rpx;
+  color: #969799;
+}
+
+.cards {
+  flex: 0 0 auto;
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 8rpx 16rpx 0;
+}
+
+.stu {
+  position: relative;
+  width: calc(20% - 12rpx);
+  margin: 6rpx;
+  padding: 10rpx 2rpx;
+  box-sizing: border-box;
+  background: #fff;
+  border: 2rpx solid #dcdee0;
+  border-radius: 10rpx;
+  text-align: center;
+}
+
+.stu:active {
+  opacity: 0.7;
+}
+
+.stu-on {
+  background: #e6f7ee;
+  border-color: #07c160;
+}
+
+.stu-id {
+  position: absolute;
+  top: 2rpx;
+  left: 6rpx;
+  font-size: 16rpx;
+  line-height: 1;
+  color: #c8c9cc;
+}
+
+.stu-name {
+  display: block;
+  font-size: 24rpx;
+  line-height: 1.2;
+  color: #323233;
+}
+
+.stu-on .stu-name,
+.stu-on .stu-id {
+  color: #07c160;
+}
+
+.tools {
+  display: flex;
+  margin-top: 20rpx;
+  padding: 12rpx 24rpx 8rpx;
+  background: #fff;
+}
+
+.tool-btn {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  margin: 0 6rpx;
+  background: #f7f8f9;
+  border-radius: 10rpx;
+  font-size: 26rpx;
+  color: #646566;
+}
+
+.tool-btn:active {
+  opacity: 0.7;
+}
+
+.editor-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 4rpx 24rpx 20rpx;
+  background: #fff;
+}
+
+.editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4rpx 6rpx;
+}
+
+.editor-title {
+  font-size: 24rpx;
+  color: #969799;
+}
+
+.editor-clear {
+  font-size: 24rpx;
+  color: #07c160;
+  padding: 4rpx 8rpx;
+}
+
+.editor {
+  flex: 1;
+  min-height: 240rpx;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16rpx;
+  border: 2rpx solid #e5e6eb;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  line-height: 1.6;
+  background: #fff;
+}

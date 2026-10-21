@@ -65,7 +65,7 @@
 }
 
 .recent-col {
-  width: 110rpx;
+  width: 100rpx;
   text-align: center;
   flex-shrink: 0;
 }
@@ -197,4 +197,26 @@
 
 .actions .btn + .btn {
   margin-top: 20rpx;
+}
+
+.fab {
+  position: fixed;
+  right: 32rpx;
+  bottom: 60rpx;
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: #07c160;
+  color: #fff;
+  font-size: 40rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6rpx 20rpx rgba(7, 193, 96, 0.4);
+  z-index: 100;
+}
+
+.fab:active {
+  opacity: 0.85;
 }

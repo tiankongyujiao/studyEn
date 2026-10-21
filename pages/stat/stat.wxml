@@ -1,0 +1,41 @@
+<view class="page">
+  <view class="topbar">
+    <picker mode="selector" range="{{phraseLabels}}" value="{{phraseIndex}}" bindchange="onPhraseChange">
+      <view class="picker">
+        <text>{{phraseLabel}}</text>
+        <text class="picker-arrow">▾</text>
+      </view>
+    </picker>
+    <view class="mode">
+      <text class="mode-label">学号</text>
+      <switch checked="{{mode === 'id'}}" color="#07c160" bindchange="onModeChange" />
+    </view>
+    <view class="count">已选 {{selectedCount}} 人</view>
+  </view>
+
+  <view class="cards">
+    <view class="grid">
+      <view class="stu {{selected[item.id] ? 'stu-on' : ''}}"
+            wx:for="{{students}}" wx:key="id"
+            data-id="{{item.id}}" bindtap="onCardTap">
+        <text class="stu-id">{{item.id}}</text>
+        <text class="stu-name">{{item.name}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="tools">
+    <view class="tool-btn" bindtap="onSort">按学号排序</view>
+    <view class="tool-btn" bindtap="onClear">清空选人</view>
+    <view class="tool-btn" bindtap="onCopy">复制</view>
+  </view>
+
+  <view class="editor-wrap">
+    <view class="editor-head">
+      <text class="editor-title">消息内容</text>
+      <text class="editor-clear" bindtap="onClearEditor">清空文字</text>
+    </view>
+    <textarea class="editor" value="{{message}}" bindinput="onMessageInput"
+              maxlength="-1" placeholder="点上方学生卡片，或选常用语自动生成…"></textarea>
+  </view>
+</view>

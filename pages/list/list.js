@@ -27,7 +27,8 @@ Page({
     formWord: '',
     formMeaning: '',
     formLevel: 1,
-    wordFocus: false
+    wordFocus: false,
+    hideMeaning: false
   },
 
   onLoad: function (options) {
@@ -35,7 +36,8 @@ Page({
     this.submittingFlag = false
     var level = parseInt(options.level, 10)
     this.setData({
-      current: level >= 1 && level <= 4 ? level : 0
+      current: level >= 1 && level <= 4 ? level : 0,
+      hideMeaning: wx.getStorageSync('list_hide_meaning') === true
     })
     if (options.add === '1') {
       this.setData({ current: 0 })
@@ -112,6 +114,12 @@ Page({
   clearSearch: function () {
     this.setData({ keyword: '' })
     this.filter(true)
+  },
+
+  toggleMeaning: function () {
+    var v = !this.data.hideMeaning
+    this.setData({ hideMeaning: v })
+    wx.setStorageSync('list_hide_meaning', v)
   },
 
   switchTab: function (e) {

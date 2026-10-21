@@ -177,16 +177,17 @@ function logMove(wordLower, from, to) {
     })
 }
 
-// 三窗口（7/15/30 天）分类流动，按"净变化"统计：
+// 四窗口（当天 + 7/15/30 天）分类流动，按"净变化"统计：
 // 窗口内同一单词移走又移回的往返对冲清零（含绕路回原点），
 // 每个词每窗口最多计一笔——首条日志的 from → 末条日志的 to
+// 当天按自然日（今天 0 点起），其余为滚动窗口
 function flowStats() {
   ensureLogsLocal()
   var day = 24 * 3600 * 1000
   var now = Date.now()
-  var windows = [7, 15, 30]
-  var up = [0, 0, 0]
-  var down = [0, 0, 0]
+  var cutoffs = [startOfToday(), now - 7 * day, now - 15 * day, now - 30 * day]
+  var up = [0, 0, 0, 0]
+  var down = [0, 0, 0, 0]
   var pairMap = {}
 
   var valid = []
@@ -196,8 +197,7 @@ function flowStats() {
   })
   valid.sort(function (a, b) { return a.ts - b.ts })
 
-  windows.forEach(function (days, wi) {
-    var cutoff = now - days * day
+  cutoffs.forEach(function (cutoff, wi) {
     var net = {}
     valid.forEach(function (l) {
       if (l.ts < cutoff) return
@@ -212,7 +212,7 @@ function flowStats() {
       var n = net[w]
       if (n.from === n.to) continue
       var key = n.from + '-' + n.to
-      if (!pairMap[key]) pairMap[key] = { from: n.from, to: n.to, counts: [0, 0, 0] }
+      if (!pairMap[key]) pairMap[key] = { from: n.from, to: n.to, counts: [0, 0, 0, 0] }
       pairMap[key].counts[wi]++
       if (n.to < n.from) up[wi]++
       else down[wi]++
@@ -221,7 +221,13 @@ function flowStats() {
 
   var pairs = []
   for (var k in pairMap) pairs.push(pairMap[k])
-  pairs.sort(function (a, b) { return b.counts[2] - a.counts[2] })
+  // 晋级（to < from）行排在退步行之前，组内按近一月数量降序
+  pairs.sort(function (a, b) {
+    var aUp = a.to < a.from
+    var bUp = b.to < b.from
+    if (aUp !== bUp) return aUp ? -1 : 1
+    return b.counts[3] - a.counts[3]
+  })
   return { up: up, down: down, pairs: pairs }
 }
 
@@ -259,23 +265,35 @@ function query(keyword, level) {
   })
 }
 
-// 最近录入统计：7/15/30 天滚动窗口 × 当前分类
+// 当天 0 点（本地时区）的时间戳，用于"当天"自然日窗口
+function startOfToday() {
+  var d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d.getTime()
+}
+
+// 最近录入统计：当天 + 7/15/30 天滚动窗口 × 当前分类
+// 当天按自然日（今天 0 点起），其余为滚动窗口
 function recentStats() {
   ensureLocal()
   var day = 24 * 3600 * 1000
   var now = Date.now()
+  var todayStart = startOfToday()
+  var today = [0, 0, 0, 0]
   var week = [0, 0, 0, 0]
   var half = [0, 0, 0, 0]
   var month = [0, 0, 0, 0]
   words.forEach(function (w) {
     var lv = w.level
     if (lv < 1 || lv > 4) return
-    var age = now - (w.createdAt || 0)
+    var ts = w.createdAt || 0
+    var age = now - ts
+    if (ts >= todayStart) today[lv - 1]++
     if (age <= 30 * day) month[lv - 1]++
     if (age <= 15 * day) half[lv - 1]++
     if (age <= 7 * day) week[lv - 1]++
   })
-  return { week: week, half: half, month: month }
+  return { today: today, week: week, half: half, month: month }
 }
 
 function findConflict(key, excludeId) {

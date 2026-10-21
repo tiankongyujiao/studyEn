@@ -40,6 +40,7 @@
       <view class="recent-title">最近录入</view>
       <view class="recent-head">
         <view class="recent-cat"></view>
+        <view class="recent-col">当天</view>
         <view class="recent-col">近一周</view>
         <view class="recent-col">近半月</view>
         <view class="recent-col">近一月</view>
@@ -49,6 +50,7 @@
           <view class="dot" style="background: {{item.color}}"></view>
           <text>{{item.name}}</text>
         </view>
+        <view class="recent-col recent-num">{{item.today}}</view>
         <view class="recent-col recent-num">{{item.week}}</view>
         <view class="recent-col recent-num">{{item.half}}</view>
         <view class="recent-col recent-num">{{item.month}}</view>
@@ -60,6 +62,7 @@
       <block wx:if="{{flowRows.length > 0}}">
         <view class="recent-head">
           <view class="recent-cat"></view>
+          <view class="recent-col">当天</view>
           <view class="recent-col">近一周</view>
           <view class="recent-col">近半月</view>
           <view class="recent-col">近一月</view>
@@ -72,6 +75,7 @@
           <view class="recent-col recent-num">{{flowUp[0]}}</view>
           <view class="recent-col recent-num">{{flowUp[1]}}</view>
           <view class="recent-col recent-num">{{flowUp[2]}}</view>
+          <view class="recent-col recent-num">{{flowUp[3]}}</view>
         </view>
         <view class="recent-row">
           <view class="recent-cat">
@@ -81,6 +85,7 @@
           <view class="recent-col recent-num">{{flowDown[0]}}</view>
           <view class="recent-col recent-num">{{flowDown[1]}}</view>
           <view class="recent-col recent-num">{{flowDown[2]}}</view>
+          <view class="recent-col recent-num">{{flowDown[3]}}</view>
         </view>
         <view class="flow-divider"></view>
         <view class="recent-row" wx:for="{{flowRows}}" wx:key="key">
@@ -92,6 +97,7 @@
           <view class="recent-col recent-num flow-num">{{item.counts[0]}}</view>
           <view class="recent-col recent-num flow-num">{{item.counts[1]}}</view>
           <view class="recent-col recent-num flow-num">{{item.counts[2]}}</view>
+          <view class="recent-col recent-num flow-num">{{item.counts[3]}}</view>
         </view>
       </block>
       <view wx:else class="flow-empty">暂无分类移动记录，移动单词后开始积累</view>

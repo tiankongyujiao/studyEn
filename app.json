@@ -2,7 +2,8 @@
   "pages": [
     "pages/index/index",
     "pages/list/list",
-    "pages/import/import"
+    "pages/import/import",
+    "pages/stat/stat"
   ],
   "window": {
     "navigationBarBackgroundColor": "#ffffff",

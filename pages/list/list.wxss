@@ -6,13 +6,36 @@
   padding-top: 12rpx;
 }
 
-.searchbar {
+.topbar-row {
   display: flex;
   align-items: center;
   margin: 0 24rpx;
+}
+
+.searchbar {
+  flex: 1;
+  display: flex;
+  align-items: center;
   background: #fff;
   border-radius: 999rpx;
   padding: 8rpx 24rpx;
+}
+
+.meaning-toggle {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  padding: 0 20rpx;
+  border-radius: 999rpx;
+  background: #fff;
+  color: #646566;
+  font-size: 24rpx;
+}
+
+.meaning-toggle.off {
+  background: #323233;
+  color: #fff;
 }
 
 .search-input {
