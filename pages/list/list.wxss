@@ -21,19 +21,24 @@
   padding: 8rpx 24rpx;
 }
 
-.meaning-toggle {
+.mode-switch {
   flex-shrink: 0;
+  display: flex;
   margin-left: 16rpx;
   height: 80rpx;
-  line-height: 80rpx;
-  padding: 0 20rpx;
   border-radius: 999rpx;
   background: #fff;
-  color: #646566;
-  font-size: 24rpx;
+  overflow: hidden;
 }
 
-.meaning-toggle.off {
+.mode-btn {
+  padding: 0 24rpx;
+  line-height: 80rpx;
+  font-size: 24rpx;
+  color: #646566;
+}
+
+.mode-btn.active {
   background: #323233;
   color: #fff;
 }
@@ -131,6 +136,12 @@
   font-size: 24rpx;
   color: #969799;
   margin-top: 4rpx;
+}
+
+.item-meaning-main {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #323233;
 }
 
 .item-time {

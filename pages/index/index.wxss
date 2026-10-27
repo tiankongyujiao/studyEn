@@ -109,6 +109,44 @@
   padding: 20rpx 0 4rpx;
 }
 
+.review-grid {
+  display: flex;
+}
+
+.review-cell {
+  flex: 1;
+  text-align: center;
+}
+
+.review-num {
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.review-label {
+  color: #969799;
+  font-size: 22rpx;
+  margin-top: 6rpx;
+}
+
+.flow-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16rpx 0 4rpx;
+  color: #969799;
+  font-size: 24rpx;
+}
+
+.flow-toggle-arrow {
+  margin-left: 6rpx;
+  transition: transform 0.2s;
+}
+
+.flow-toggle-arrow-open {
+  transform: rotate(180deg);
+}
+
 .seg {
   display: flex;
   background: #fff;

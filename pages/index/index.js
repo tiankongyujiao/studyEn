@@ -7,9 +7,11 @@ Page({
     percents: [0, 0, 0, 0],
     total: 0,
     recentRows: [],
+    reviewCells: [],
     flowUp: [0, 0, 0, 0],
     flowDown: [0, 0, 0, 0],
     flowRows: [],
+    flowExpanded: false,
     activeTab: 0,
     synced: false,
     hasLocal: false
@@ -18,6 +20,10 @@ Page({
   onTabTap: function (e) {
     var t = +e.currentTarget.dataset.tab
     if (t !== this.data.activeTab) this.setData({ activeTab: t })
+  },
+
+  toggleFlow: function () {
+    this.setData({ flowExpanded: !this.data.flowExpanded })
   },
 
   onShow: function () {
@@ -56,11 +62,16 @@ Page({
         counts: p.counts
       }
     })
+    var labels = ['当天', '近一周', '近半月', '近一月']
+    var reviewCells = store.reviewStats().map(function (n, i) {
+      return { num: n, label: labels[i] }
+    })
     this.setData({
       counts: s.counts,
       percents: percents,
       total: s.total,
       recentRows: recentRows,
+      reviewCells: reviewCells,
       flowUp: f.up,
       flowDown: f.down,
       flowRows: flowRows,

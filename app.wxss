@@ -30,14 +30,19 @@ page {
   border: 2rpx solid #07c160;
 }
 
+.chips {
+  display: flex;
+  justify-content: space-between;
+}
+
 .chip {
-  display: inline-block;
-  padding: 10rpx 28rpx;
+  padding: 10rpx 18rpx;
   border-radius: 999rpx;
   border: 2rpx solid #dcdee0;
   color: #646566;
   font-size: 26rpx;
-  margin: 0 16rpx 16rpx 0;
   background: #fff;
   line-height: 1.4;
+  text-align: center;
+  white-space: nowrap;
 }

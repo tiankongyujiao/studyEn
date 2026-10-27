@@ -56,16 +56,22 @@ Page({
     formLevel: 1,
     wordFocus: false,
     suggestions: [],
-    hideMeaning: false
+    displayMode: 'both'
   },
 
   onLoad: function (options) {
     this.shown = PAGE_SIZE
     this.submittingFlag = false
     var level = parseInt(options.level, 10)
+    var mode = wx.getStorageSync('list_display_mode')
+    if (['en', 'zh', 'both'].indexOf(mode) < 0) {
+      // 旧版"隐藏释义"开关迁移：隐藏过释义的对应"只显示英文"
+      mode = wx.getStorageSync('list_hide_meaning') === true ? 'en' : 'both'
+      try { wx.removeStorageSync('list_hide_meaning') } catch (e) {}
+    }
     this.setData({
       current: level >= 1 && level <= 4 ? level : 0,
-      hideMeaning: wx.getStorageSync('list_hide_meaning') === true
+      displayMode: mode
     })
     if (options.add === '1') {
       this.setData({ current: 0 })
@@ -144,10 +150,11 @@ Page({
     this.filter(true)
   },
 
-  toggleMeaning: function () {
-    var v = !this.data.hideMeaning
-    this.setData({ hideMeaning: v })
-    wx.setStorageSync('list_hide_meaning', v)
+  setDisplayMode: function (e) {
+    var m = e.currentTarget.dataset.mode
+    if (m === this.data.displayMode) return
+    this.setData({ displayMode: m })
+    wx.setStorageSync('list_display_mode', m)
   },
 
   switchTab: function (e) {

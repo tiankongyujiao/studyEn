@@ -6,7 +6,11 @@
                confirm-type="search" bindinput="onSearch" />
         <view class="search-clear" wx:if="{{keyword}}" catchtap="clearSearch">×</view>
       </view>
-      <view class="meaning-toggle {{hideMeaning ? 'off' : ''}}" bindtap="toggleMeaning">{{hideMeaning ? '显示释义' : '隐藏释义'}}</view>
+      <view class="mode-switch">
+        <view class="mode-btn {{displayMode === 'en' ? 'active' : ''}}" data-mode="en" bindtap="setDisplayMode">英</view>
+        <view class="mode-btn {{displayMode === 'zh' ? 'active' : ''}}" data-mode="zh" bindtap="setDisplayMode">中</view>
+        <view class="mode-btn {{displayMode === 'both' ? 'active' : ''}}" data-mode="both" bindtap="setDisplayMode">全</view>
+      </view>
     </view>
     <scroll-view scroll-x scroll-with-animation class="tabs">
       <view class="tab {{current === item.id ? 'active' : ''}}" wx:for="{{tabs}}" wx:key="id"
@@ -24,11 +28,15 @@
     <view class="item" wx:for="{{items}}" wx:key="_id" hover-class="item-hover"
           data-id="{{item._id}}" bindtap="onItemTap">
       <view class="item-main">
-        <view class="item-word-row">
+        <view class="item-word-row" wx:if="{{displayMode !== 'zh'}}">
           <text class="item-word">{{item.word}}</text>
           <text class="review-badge" wx:if="{{item.level === 1 && item.reviewCount > 0}}">×{{item.reviewCount}}</text>
         </view>
-        <view class="item-meaning" wx:if="{{item.meaning && !hideMeaning}}">{{item.meaning}}</view>
+        <block wx:if="{{displayMode === 'zh'}}">
+          <view class="item-meaning item-meaning-main" wx:if="{{item.meaning}}">{{item.meaning}}</view>
+          <view class="item-meaning" wx:else>（未填释义）</view>
+        </block>
+        <view class="item-meaning" wx:elif="{{displayMode === 'both' && item.meaning}}">{{item.meaning}}</view>
       </view>
       <view class="item-side">
         <view class="item-time" wx:if="{{item.timeText}}">{{item.timeText}}</view>

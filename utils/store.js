@@ -156,7 +156,7 @@ async function fetchLogs() {
 async function loadLogs() {
   var data = await fetchLogs()
   logs = data.map(function (d) {
-    return { _id: d._id, wordLower: d.wordLower, from: d.from, to: d.to, ts: d.ts }
+    return { _id: d._id, type: d.type || 'move', wordLower: d.wordLower, from: d.from, to: d.to, ts: d.ts }
   })
   logsLocalLoaded = true
   logsSynced = true
@@ -229,6 +229,35 @@ function flowStats() {
     return b.counts[3] - a.counts[3]
   })
   return { up: up, down: down, pairs: pairs }
+}
+
+// 记一笔复习日志。fire-and-forget：写失败不影响复习计数本身
+function logReview(wordLower) {
+  var doc = { type: 'review', wordLower: wordLower, ts: Date.now() }
+  logDb().add({ data: doc })
+    .then(function (res) {
+      logs.push(Object.assign({ _id: res._id }, doc))
+      persistLogs()
+    })
+    .catch(function (e) {
+      console.warn('复习日志写入失败（logs 集合可能未创建）', e)
+    })
+}
+
+// 四窗口（当天 + 7/15/30 天）复习次数。旧数据无复习日志，从启用起开始积累
+function reviewStats() {
+  ensureLogsLocal()
+  var day = 24 * 3600 * 1000
+  var now = Date.now()
+  var cutoffs = [startOfToday(), now - 7 * day, now - 15 * day, now - 30 * day]
+  var counts = [0, 0, 0, 0]
+  logs.forEach(function (l) {
+    if (!l || l.type !== 'review' || !l.ts) return
+    for (var wi = 0; wi < 4; wi++) {
+      if (l.ts >= cutoffs[wi]) counts[wi]++
+    }
+  })
+  return counts
 }
 
 function isSynced() {
@@ -375,6 +404,7 @@ async function reviewWord(id) {
   var count = (rec.reviewCount || 0) + 1
   await db().doc(id).update({ data: { reviewCount: count } })
   rec.reviewCount = count
+  logReview(rec.wordLower)
   persist()
   return { ok: true, count: count }
 }
@@ -461,6 +491,7 @@ module.exports = {
   isSynced: isSynced,
   isLogsSynced: isLogsSynced,
   flowStats: flowStats,
+  reviewStats: reviewStats,
   hasLocal: hasLocal,
   all: ensureLocal,
   stats: stats,
