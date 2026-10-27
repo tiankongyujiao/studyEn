@@ -11,6 +11,7 @@
         <view class="mode-btn {{displayMode === 'zh' ? 'active' : ''}}" data-mode="zh" bindtap="setDisplayMode">中</view>
         <view class="mode-btn {{displayMode === 'both' ? 'active' : ''}}" data-mode="both" bindtap="setDisplayMode">全</view>
       </view>
+      <view class="view-btn {{groupBy || sortMode !== 'time-desc' ? 'view-btn-on' : ''}}" bindtap="openDrawer">排序</view>
     </view>
     <scroll-view scroll-x scroll-with-animation class="tabs">
       <view class="tab {{current === item.id ? 'active' : ''}}" wx:for="{{tabs}}" wx:key="id"
@@ -25,24 +26,25 @@
   </view>
 
   <view class="list">
-    <view class="item" wx:for="{{items}}" wx:key="_id" hover-class="item-hover"
-          data-id="{{item._id}}" bindtap="onItemTap">
-      <view class="item-main">
-        <view class="item-word-row" wx:if="{{displayMode !== 'zh'}}">
-          <text class="item-word">{{item.word}}</text>
-          <text class="review-badge" wx:if="{{item.level === 1 && item.reviewCount > 0}}">×{{item.reviewCount}}</text>
+    <block wx:if="{{groupBy}}">
+      <view class="group" wx:for="{{groups}}" wx:for-item="g" wx:for-index="gi" wx:key="key">
+        <view class="group-head" data-index="{{gi}}" bindtap="toggleGroup">
+          <text class="group-label">{{g.label}}</text>
+          <text class="group-count">{{g.count}} 词</text>
+          <text class="group-arrow {{g.open ? 'group-arrow-open' : ''}}">▾</text>
         </view>
-        <block wx:if="{{displayMode === 'zh'}}">
-          <view class="item-meaning item-meaning-main" wx:if="{{item.meaning}}">{{item.meaning}}</view>
-          <view class="item-meaning" wx:else>（未填释义）</view>
+        <block wx:if="{{g.open}}">
+          <block wx:for="{{g.items}}" wx:key="_id">
+            <template is="word-item" data="{{word: item, displayMode: displayMode}}"/>
+          </block>
         </block>
-        <view class="item-meaning" wx:elif="{{displayMode === 'both' && item.meaning}}">{{item.meaning}}</view>
       </view>
-      <view class="item-side">
-        <view class="item-time" wx:if="{{item.timeText}}">{{item.timeText}}</view>
-        <view class="tag" style="color: {{item.levelColor}}; background: {{item.levelBg}}">{{item.levelName}}</view>
-      </view>
-    </view>
+    </block>
+    <block wx:else>
+      <block wx:for="{{items}}" wx:key="_id">
+        <template is="word-item" data="{{word: item, displayMode: displayMode}}"/>
+      </block>
+    </block>
   </view>
 
   <view class="empty" wx:if="{{matched === 0}}">
@@ -73,4 +75,45 @@
       </view>
     </view>
   </view>
+
+  <view class="drawer-mask" wx:if="{{showDrawer}}" bindtap="closeDrawer">
+    <view class="drawer" catchtap="noop">
+      <view class="drawer-title">排序与分组</view>
+      <view class="drawer-label">排序</view>
+      <view class="drawer-grid">
+        <view class="dopt {{sortMode === 'time-desc' ? 'dopt-on' : ''}}" data-value="time-desc" bindtap="pickSort">最新录入在前</view>
+        <view class="dopt {{sortMode === 'time-asc' ? 'dopt-on' : ''}}" data-value="time-asc" bindtap="pickSort">最早录入在前</view>
+        <view class="dopt {{sortMode === 'count-desc' ? 'dopt-on' : ''}}" data-value="count-desc" bindtap="pickSort">复习最多在前</view>
+        <view class="dopt {{sortMode === 'count-asc' ? 'dopt-on' : ''}}" data-value="count-asc" bindtap="pickSort">复习最少在前</view>
+      </view>
+      <view class="drawer-label">分组<text class="drawer-hint">（不选即平铺）</text></view>
+      <view class="drawer-grid">
+        <view class="dopt {{groupBy === 'day' ? 'dopt-on' : ''}}" data-value="day" bindtap="pickGroup">按天</view>
+        <view class="dopt {{groupBy === 'month' ? 'dopt-on' : ''}}" data-value="month" bindtap="pickGroup">按月</view>
+        <view class="dopt {{groupBy === 'year' ? 'dopt-on' : ''}}" data-value="year" bindtap="pickGroup">按年</view>
+        <view class="dopt {{expandAll ? 'dopt-on' : ''}}" bindtap="toggleExpandAll">{{expandAll ? '已全部展开' : '全部展开'}}</view>
+      </view>
+      <view class="drawer-done" bindtap="closeDrawer">完成</view>
+    </view>
+  </view>
 </view>
+
+<template name="word-item">
+  <view class="item" hover-class="item-hover" data-id="{{word._id}}" bindtap="onItemTap">
+    <view class="item-main">
+      <view class="item-word-row" wx:if="{{displayMode !== 'zh'}}">
+        <text class="item-word">{{word.word}}</text>
+        <text class="review-badge" wx:if="{{word.level === 1 && word.reviewCount > 0}}">×{{word.reviewCount}}</text>
+      </view>
+      <block wx:if="{{displayMode === 'zh'}}">
+        <view class="item-meaning item-meaning-main" wx:if="{{word.meaning}}">{{word.meaning}}</view>
+        <view class="item-meaning" wx:else>（未填释义）</view>
+      </block>
+      <view class="item-meaning" wx:elif="{{displayMode === 'both' && word.meaning}}">{{word.meaning}}</view>
+    </view>
+    <view class="item-side">
+      <view class="item-time" wx:if="{{word.timeText}}">{{word.timeText}}</view>
+      <view class="tag" style="color: {{word.levelColor}}; background: {{word.levelBg}}">{{word.levelName}}</view>
+    </view>
+  </view>
+</template>
