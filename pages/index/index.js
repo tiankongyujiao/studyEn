@@ -62,7 +62,7 @@ Page({
         counts: p.counts
       }
     })
-    var labels = ['当天', '近一周', '近半月', '近一月']
+    var labels = ['当天', '当周', '当前半月', '当月']
     var reviewCells = store.reviewStats().map(function (n, i) {
       return { num: n, label: labels[i] }
     })

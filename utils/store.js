@@ -177,15 +177,12 @@ function logMove(wordLower, from, to) {
     })
 }
 
-// 四窗口（当天 + 7/15/30 天）分类流动，按"净变化"统计：
+// 四窗口（当天 / 本周一起 / 自然半月 / 本月）分类流动，按"净变化"统计：
 // 窗口内同一单词移走又移回的往返对冲清零（含绕路回原点），
 // 每个词每窗口最多计一笔——首条日志的 from → 末条日志的 to
-// 当天按自然日（今天 0 点起），其余为滚动窗口
 function flowStats() {
   ensureLogsLocal()
-  var day = 24 * 3600 * 1000
-  var now = Date.now()
-  var cutoffs = [startOfToday(), now - 7 * day, now - 15 * day, now - 30 * day]
+  var cutoffs = statCutoffs()
   var up = [0, 0, 0, 0]
   var down = [0, 0, 0, 0]
   var pairMap = {}
@@ -244,12 +241,10 @@ function logReview(wordLower) {
     })
 }
 
-// 四窗口（当天 + 7/15/30 天）复习次数。旧数据无复习日志，从启用起开始积累
+// 四窗口（同最近动态口径）复习次数。旧数据无复习日志，从启用起开始积累
 function reviewStats() {
   ensureLogsLocal()
-  var day = 24 * 3600 * 1000
-  var now = Date.now()
-  var cutoffs = [startOfToday(), now - 7 * day, now - 15 * day, now - 30 * day]
+  var cutoffs = statCutoffs()
   var counts = [0, 0, 0, 0]
   logs.forEach(function (l) {
     if (!l || l.type !== 'review' || !l.ts) return
@@ -294,35 +289,55 @@ function query(keyword, level) {
   })
 }
 
-// 当天 0 点（本地时区）的时间戳，用于"当天"自然日窗口
+// 自然桶起点（本地时区 0 点）：当天、本周一、本月 1 日、自然半月（1 日或 16 日）
 function startOfToday() {
   var d = new Date()
   d.setHours(0, 0, 0, 0)
   return d.getTime()
 }
 
-// 最近录入统计：当天 + 7/15/30 天滚动窗口 × 当前分类
-// 当天按自然日（今天 0 点起），其余为滚动窗口
+function startOfWeek() {
+  var d = new Date()
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+  return d.getTime()
+}
+
+// 自然半月：上半月从 1 日起，下半月从 16 日起
+function startOfHalf() {
+  var d = new Date()
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() >= 16 ? 16 : 1)
+  return d.getTime()
+}
+
+function startOfMonth() {
+  var d = new Date()
+  d.setHours(0, 0, 0, 0)
+  d.setDate(1)
+  return d.getTime()
+}
+
+// 最近动态四列共用窗口：当天 / 当周（周一起）/ 当前半月（自然半月）/ 当月（1 日起），
+// 均为自然桶，不是滚动天数
+function statCutoffs() {
+  return [startOfToday(), startOfWeek(), startOfHalf(), startOfMonth()]
+}
+
+// 最近录入统计：四自然桶 × 当前分类
 function recentStats() {
   ensureLocal()
-  var day = 24 * 3600 * 1000
-  var now = Date.now()
-  var todayStart = startOfToday()
-  var today = [0, 0, 0, 0]
-  var week = [0, 0, 0, 0]
-  var half = [0, 0, 0, 0]
-  var month = [0, 0, 0, 0]
+  var cutoffs = statCutoffs()
+  var out = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
   words.forEach(function (w) {
     var lv = w.level
     if (lv < 1 || lv > 4) return
     var ts = w.createdAt || 0
-    var age = now - ts
-    if (ts >= todayStart) today[lv - 1]++
-    if (age <= 30 * day) month[lv - 1]++
-    if (age <= 15 * day) half[lv - 1]++
-    if (age <= 7 * day) week[lv - 1]++
+    for (var wi = 0; wi < 4; wi++) {
+      if (ts >= cutoffs[wi]) out[wi][lv - 1]++
+    }
   })
-  return { today: today, week: week, half: half, month: month }
+  return { today: out[0], week: out[1], half: out[2], month: out[3] }
 }
 
 function findConflict(key, excludeId) {
