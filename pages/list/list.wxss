@@ -148,6 +148,10 @@
   color: #fff;
 }
 
+.dopt-wide {
+  width: calc(100% - 20rpx);
+}
+
 .drawer-done {
   background: #07c160;
   color: #fff;

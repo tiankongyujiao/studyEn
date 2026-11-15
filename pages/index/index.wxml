@@ -54,7 +54,7 @@
           <view class="recent-col">当天</view>
           <view class="recent-col">当周</view>
           <view class="recent-col">当前半月</view>
-          <view class="recent-col">当月月</view>
+          <view class="recent-col">当月</view>
         </view>
         <view class="recent-row">
           <view class="recent-cat">

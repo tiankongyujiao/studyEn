@@ -73,6 +73,16 @@ function groupLabelOf(key, mode) {
   return key
 }
 
+// 类别：无空格→单词；有空格且以「.」结尾→固定句式；有空格不以「.」结尾→短语
+var TYPE_LABELS = { word: '单词', phrase: '短语', sentence: '固定句式' }
+var TYPE_ORDER = ['word', 'phrase', 'sentence']
+
+function wordTypeOf(word) {
+  var w = String(word || '').trim()
+  if (!/\s/.test(w)) return 'word'
+  return w.charAt(w.length - 1) === '.' ? 'sentence' : 'phrase'
+}
+
 function cmpId(a, b) {
   return a._id < b._id ? -1 : a._id > b._id ? 1 : 0
 }
@@ -139,7 +149,7 @@ Page({
     var view = {}
     try { view = wx.getStorageSync('list_view_settings') || {} } catch (e) {}
     var sortMode = ['time-desc', 'time-asc', 'count-desc', 'count-asc'].indexOf(view.sort) >= 0 ? view.sort : 'time-desc'
-    var groupBy = ['', 'day', 'month', 'year'].indexOf(view.group) >= 0 ? view.group : ''
+    var groupBy = ['', 'day', 'month', 'year', 'type'].indexOf(view.group) >= 0 ? view.group : ''
     this.setData({
       current: level >= 1 && level <= 4 ? level : 0,
       displayMode: mode,
@@ -202,28 +212,45 @@ Page({
     var mapped = shown.map(mapItem)
     var groups = []
     if (d.groupBy) {
+      var isType = d.groupBy === 'type'
+      var keyOf = isType
+        ? function (m) { return wordTypeOf(m.word) }
+        : function (m) { return groupKeyOf(m.createdAt || 0, d.groupBy) }
+      var labelOf = isType
+        ? function (k) { return TYPE_LABELS[k] || k }
+        : function (k) { return groupLabelOf(k, d.groupBy) }
       // 组头总数按完整过滤结果统计，不受分页截断影响
       var totals = {}
       list.forEach(function (w) {
-        var k = groupKeyOf(w.createdAt || 0, d.groupBy)
+        var k = keyOf(w)
         totals[k] = (totals[k] || 0) + 1
       })
       var byKey = {}
       var order = []
       mapped.forEach(function (m) {
-        var k = groupKeyOf(m.createdAt || 0, d.groupBy)
+        var k = keyOf(m)
         var g = byKey[k]
         if (!g) {
-          g = byKey[k] = { key: k, label: groupLabelOf(k, d.groupBy), open: false, count: totals[k], items: [] }
+          g = byKey[k] = { key: k, label: labelOf(k), open: false, count: totals[k], items: [] }
           order.push(k)
         }
         g.items.push(m)
       })
-      // 组按日期排，方向跟随排序的正/倒，与排序字段无关
-      var desc = d.sortMode.indexOf('-desc') >= 0
-      order.sort(desc
-        ? function (a, b) { return a < b ? 1 : a > b ? -1 : 0 }
-        : function (a, b) { return a < b ? -1 : a > b ? 1 : 0 })
+      if (isType) {
+        // 按类别固定顺序：单词 → 短语 → 固定句式，方向跟随排序的正/倒
+        var descType = d.sortMode.indexOf('-desc') >= 0
+        order.sort(function (a, b) {
+          var ia = TYPE_ORDER.indexOf(a)
+          var ib = TYPE_ORDER.indexOf(b)
+          return descType ? ib - ia : ia - ib
+        })
+      } else {
+        // 组按日期排，方向跟随排序的正/倒，与排序字段无关
+        var desc = d.sortMode.indexOf('-desc') >= 0
+        order.sort(desc
+          ? function (a, b) { return a < b ? 1 : a > b ? -1 : 0 }
+          : function (a, b) { return a < b ? -1 : a > b ? 1 : 0 })
+      }
       groups = order.map(function (k) {
         var g = byKey[k]
         g.open = d.groupOpen[k] !== undefined ? d.groupOpen[k] : d.expandAll

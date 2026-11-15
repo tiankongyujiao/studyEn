@@ -91,7 +91,8 @@
         <view class="dopt {{groupBy === 'day' ? 'dopt-on' : ''}}" data-value="day" bindtap="pickGroup">按天</view>
         <view class="dopt {{groupBy === 'month' ? 'dopt-on' : ''}}" data-value="month" bindtap="pickGroup">按月</view>
         <view class="dopt {{groupBy === 'year' ? 'dopt-on' : ''}}" data-value="year" bindtap="pickGroup">按年</view>
-        <view class="dopt {{expandAll ? 'dopt-on' : ''}}" bindtap="toggleExpandAll">{{expandAll ? '已全部展开' : '全部展开'}}</view>
+        <view class="dopt {{groupBy === 'type' ? 'dopt-on' : ''}}" data-value="type" bindtap="pickGroup">按类别</view>
+        <view class="dopt dopt-wide {{expandAll ? 'dopt-on' : ''}}" bindtap="toggleExpandAll">{{expandAll ? '已全部展开' : '全部展开'}}</view>
       </view>
       <view class="drawer-done" bindtap="closeDrawer">完成</view>
     </view>
