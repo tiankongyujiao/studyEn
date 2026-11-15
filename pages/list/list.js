@@ -101,10 +101,19 @@ var SORTERS = {
 
 function mapItem(w) {
   var info = store.levelInfo(w.level)
+  // 模棱两可的来源标签：prevLevel 为 1/2/4 表示从对应分类移入；0 或缺失（直接新加）不显示
+  var origin = null
+  if (w.level === 3 && (w.prevLevel === 1 || w.prevLevel === 2 || w.prevLevel === 4)) {
+    var oi = store.levelInfo(w.prevLevel)
+    origin = { name: '原' + oi.name, color: oi.color, bg: oi.bg }
+  }
   return Object.assign({}, w, {
     levelName: info.name,
     levelColor: info.color,
     levelBg: info.bg,
+    originName: origin ? origin.name : '',
+    originColor: origin ? origin.color : '',
+    originBg: origin ? origin.bg : '',
     timeText: formatTime(w.updatedAt || w.createdAt)
   })
 }

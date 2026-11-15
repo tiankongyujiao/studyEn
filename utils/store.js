@@ -98,6 +98,7 @@ async function loadWords() {
       wordLower: d.wordLower,
       meaning: d.meaning || '',
       level: d.level,
+      prevLevel: d.prevLevel,
       reviewCount: d.reviewCount || 0,
       createdAt: d.createdAt,
       updatedAt: d.updatedAt
@@ -359,6 +360,7 @@ async function addWord(input) {
     wordLower: key,
     meaning: String(input.meaning || '').trim(),
     level: input.level,
+    prevLevel: 0,
     reviewCount: 0,
     createdAt: now,
     updatedAt: now
@@ -381,6 +383,7 @@ async function updateWord(id, patch) {
   if (!key) return { ok: false, error: 'empty' }
   var conflict = findConflict(key, id)
   if (conflict) return { ok: false, conflict: conflict }
+  var oldLevel = rec.level
   var data = {
     word: word,
     wordLower: key,
@@ -388,8 +391,8 @@ async function updateWord(id, patch) {
     level: patch.level !== undefined ? patch.level : rec.level,
     updatedAt: Date.now()
   }
+  if (data.level !== oldLevel) data.prevLevel = oldLevel
   await db().doc(id).update({ data: data })
-  var oldLevel = rec.level
   Object.assign(rec, data)
   if (data.level !== oldLevel) {
     logMove(rec.wordLower, oldLevel, data.level)
@@ -468,6 +471,7 @@ async function importWords(items, level) {
       wordLower: key,
       meaning: String(it.meaning || '').trim(),
       level: level,
+      prevLevel: 0,
       reviewCount: 0,
       createdAt: now,
       updatedAt: now

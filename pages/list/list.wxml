@@ -114,6 +114,8 @@
     </view>
     <view class="item-side">
       <view class="item-time" wx:if="{{word.timeText}}">{{word.timeText}}</view>
+      <view class="origin-tag" wx:if="{{word.originName}}"
+            style="color: {{word.originColor}}; background: {{word.originBg}}">{{word.originName}}</view>
       <view class="tag" style="color: {{word.levelColor}}; background: {{word.levelBg}}">{{word.levelName}}</view>
     </view>
   </view>

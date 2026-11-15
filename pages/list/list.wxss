@@ -283,6 +283,13 @@
   border-radius: 999rpx;
 }
 
+.origin-tag {
+  font-size: 18rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+  margin-bottom: 6rpx;
+}
+
 .empty {
   text-align: center;
   color: #969799;
