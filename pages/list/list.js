@@ -107,6 +107,7 @@ function mapItem(w) {
     var oi = store.levelInfo(w.prevLevel)
     origin = { name: '原' + oi.name, color: oi.color, bg: oi.bg }
   }
+  var sentences = w.sentences || []
   return Object.assign({}, w, {
     levelName: info.name,
     levelColor: info.color,
@@ -114,7 +115,10 @@ function mapItem(w) {
     originName: origin ? origin.name : '',
     originColor: origin ? origin.color : '',
     originBg: origin ? origin.bg : '',
-    timeText: formatTime(w.updatedAt || w.createdAt)
+    timeText: formatTime(w.updatedAt || w.createdAt),
+    senCount: sentences.length,
+    senOpen: false,
+    senHide: {}
   })
 }
 
@@ -134,6 +138,8 @@ Page({
     formWord: '',
     formMeaning: '',
     formLevel: 1,
+    formSentences: [],
+    senFocusIdx: -1,
     wordFocus: false,
     suggestions: [],
     displayMode: 'both',
@@ -148,6 +154,7 @@ Page({
   onLoad: function (options) {
     this.shown = PAGE_SIZE
     this.submittingFlag = false
+    this.senState = {}
     var level = parseInt(options.level, 10)
     var mode = wx.getStorageSync('list_display_mode')
     if (['en', 'zh', 'both'].indexOf(mode) < 0) {
@@ -219,6 +226,15 @@ Page({
     var s = store.stats()
     var shown = list.slice(0, this.shown)
     var mapped = shown.map(mapItem)
+    // 会话级展开状态回填：切分类/搜索/排序后保持，退出页面重置
+    var senState = this.senState || {}
+    mapped.forEach(function (m) {
+      var st = senState[m._id]
+      if (st) {
+        m.senOpen = !!st.open
+        m.senHide = st.hide || {}
+      }
+    })
     var groups = []
     if (d.groupBy) {
       var isType = d.groupBy === 'type'
@@ -348,6 +364,60 @@ Page({
     this.filter(true)
   },
 
+  // 整组展开/收起：按 _id 定位，平铺与分组两种渲染共用；状态记入 this.senState 供 filter 回填
+  toggleSentences: function (e) {
+    var id = e.currentTarget.dataset.id
+    var st = this.senState = this.senState || {}
+    var cur = st[id] || {}
+    st[id] = { open: !cur.open, hide: cur.hide || {} }
+    var patch = {}
+    var find = function (list) {
+      for (var i = 0; i < list.length; i++) {
+        if (list[i]._id === id) return i
+      }
+      return -1
+    }
+    var i = find(this.data.items)
+    if (i >= 0) patch['items[' + i + '].senOpen'] = st[id].open
+    if (this.data.groupBy) {
+      for (var gi = 0; gi < this.data.groups.length; gi++) {
+        var j = find(this.data.groups[gi].items)
+        if (j >= 0) {
+          patch['groups[' + gi + '].items[' + j + '].senOpen'] = st[id].open
+          break
+        }
+      }
+    }
+    this.setData(patch)
+  },
+
+  // 全部展开后单条收起：该条缩为一行摘要；再点恢复。同词的收起状态记在 senHide 里
+  toggleSentenceHide: function (e) {
+    var id = e.currentTarget.dataset.id
+    var idx = +e.currentTarget.dataset.index
+    var st = this.senState = this.senState || {}
+    var cur = st[id] || {}
+    var hide = Object.assign({}, cur.hide)
+    if (hide[idx]) delete hide[idx]
+    else hide[idx] = true
+    st[id] = { open: cur.open !== undefined ? cur.open : true, hide: hide }
+    var patch = {}
+    var apply = function (list, pathPrefix) {
+      for (var i = 0; i < list.length; i++) {
+        if (list[i]._id !== id) continue
+        patch[pathPrefix + i + '.senHide'] = hide
+        return true
+      }
+      return false
+    }
+    if (!apply(this.data.items, 'items[')) {
+      for (var gi = 0; gi < this.data.groups.length; gi++) {
+        if (apply(this.data.groups[gi].items, 'groups[' + gi + '].items[')) break
+      }
+    }
+    this.setData(patch)
+  },
+
   clearSearch: function () {
     this.setData({ keyword: '' })
     this.filter(true)
@@ -460,6 +530,9 @@ Page({
 
   openForm: function (rec) {
     if (rec) {
+      var sens = (rec.sentences || []).map(function (s, i) {
+        return { _k: 'k' + i, en: s.en, zh: s.zh, editing: false }
+      })
       this.setData({
         showForm: true,
         editingId: rec._id,
@@ -467,6 +540,7 @@ Page({
         formWord: rec.word,
         formMeaning: rec.meaning || '',
         formLevel: rec.level,
+        formSentences: sens,
         wordFocus: false,
         suggestions: []
       })
@@ -479,6 +553,7 @@ Page({
         formWord: '',
         formMeaning: '',
         formLevel: level,
+        formSentences: [],
         wordFocus: true,
         suggestions: []
       })
@@ -486,7 +561,7 @@ Page({
   },
 
   closeForm: function () {
-    this.setData({ showForm: false, suggestions: [] })
+    this.setData({ showForm: false, suggestions: [], formSentences: [], senFocusIdx: -1 })
     this.submittingFlag = false
   },
 
@@ -507,6 +582,66 @@ Page({
     this.setData({ formLevel: +e.currentTarget.dataset.level })
   },
 
+  addSentence: function () {
+    this.senBlurTimer = clearTimeout(this.senBlurTimer)
+    var sens = this.data.formSentences
+    for (var i = 0; i < sens.length; i++) {
+      sens[i] = { _k: sens[i]._k, en: sens[i].en, zh: sens[i].zh, editing: false }
+    }
+    this.senKey = (this.senKey || 0) + 1
+    sens.push({ _k: 'k' + this.senKey, en: '', zh: '', editing: true })
+    this.setData({ formSentences: sens, senFocusIdx: sens.length - 1 })
+  },
+
+  editSentence: function (e) {
+    var i = +e.currentTarget.dataset.index
+    var sens = this.data.formSentences
+    if (!sens[i] || sens[i].editing) return
+    this.senBlurTimer = clearTimeout(this.senBlurTimer)
+    for (var j = 0; j < sens.length; j++) {
+      sens[j] = { _k: sens[j]._k, en: sens[j].en, zh: sens[j].zh, editing: j === i }
+    }
+    this.setData({ formSentences: sens, senFocusIdx: i })
+  },
+
+  // 英→中输入框切换会先触发 blur，延迟收起；重新聚焦（bindfocus）时取消
+  cancelSenBlur: function () {
+    this.senBlurTimer = clearTimeout(this.senBlurTimer)
+  },
+
+  doneSentence: function () {
+    var that = this
+    this.senBlurTimer = setTimeout(function () {
+      var sens = that.data.formSentences
+      for (var i = 0; i < sens.length; i++) {
+        sens[i] = { _k: sens[i]._k, en: sens[i].en, zh: sens[i].zh, editing: false }
+      }
+      that.setData({ formSentences: sens, senFocusIdx: -1 })
+    }, 150)
+  },
+
+  onSenEn: function (e) {
+    var i = +e.currentTarget.dataset.index
+    var patch = {}
+    patch['formSentences[' + i + '].en'] = e.detail.value
+    this.setData(patch)
+  },
+
+  onSenZh: function (e) {
+    var i = +e.currentTarget.dataset.index
+    var patch = {}
+    patch['formSentences[' + i + '].zh'] = e.detail.value
+    this.setData(patch)
+  },
+
+  removeSentence: function (e) {
+    this.senBlurTimer = clearTimeout(this.senBlurTimer)
+    var i = +e.currentTarget.dataset.index
+    var sens = this.data.formSentences.slice()
+    sens.splice(i, 1)
+    this.setData({ formSentences: sens, senFocusIdx: -1 })
+  },
+
   submitForm: function () {
     if (this.submittingFlag) return
     var d = this.data
@@ -517,9 +652,11 @@ Page({
     }
     this.submittingFlag = true
     var that = this
+    // 例句入参直接给原始数组，store 层负责过滤两端皆空的句子
+    var rawSentences = d.formSentences.map(function (s) { return { en: s.en, zh: s.zh } })
     var p = d.editingId
-      ? store.updateWord(d.editingId, { word: word, meaning: d.formMeaning, level: d.formLevel })
-      : store.addWord({ word: word, meaning: d.formMeaning, level: d.formLevel })
+      ? store.updateWord(d.editingId, { word: word, meaning: d.formMeaning, level: d.formLevel, sentences: rawSentences })
+      : store.addWord({ word: word, meaning: d.formMeaning, level: d.formLevel, sentences: rawSentences })
     p.then(function (res) {
       that.submittingFlag = false
       if (res.ok) {
@@ -527,8 +664,8 @@ Page({
         if (d.editingId) {
           that.closeForm()
         } else {
-          // 连续录入：清空字段、保持弹层、重新聚焦
-          that.setData({ formWord: '', formMeaning: '', wordFocus: false, suggestions: [] })
+          // 连续录入：清空字段（含例句）、保持弹层、重新聚焦
+          that.setData({ formWord: '', formMeaning: '', formSentences: [], wordFocus: false, suggestions: [] })
           setTimeout(function () { that.setData({ wordFocus: true }) }, 80)
         }
         that.filter()

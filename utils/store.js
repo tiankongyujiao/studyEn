@@ -32,6 +32,20 @@ function normalize(w) {
   return String(w == null ? '' : w).trim().toLowerCase()
 }
 
+// 例句规整：只填一边的保留，两端都空的丢弃
+function normalizeSentences(list) {
+  if (!Array.isArray(list)) return []
+  var out = []
+  list.forEach(function (s) {
+    if (!s) return
+    var en = String(s.en || '').trim()
+    var zh = String(s.zh || '').trim()
+    if (!en && !zh) return
+    out.push({ en: en, zh: zh })
+  })
+  return out
+}
+
 function db() {
   return wx.cloud.database().collection(COLLECTION)
 }
@@ -97,6 +111,7 @@ async function loadWords() {
       word: d.word,
       wordLower: d.wordLower,
       meaning: d.meaning || '',
+      sentences: normalizeSentences(d.sentences),
       level: d.level,
       prevLevel: d.prevLevel,
       reviewCount: d.reviewCount || 0,
@@ -359,6 +374,7 @@ async function addWord(input) {
     word: word,
     wordLower: key,
     meaning: String(input.meaning || '').trim(),
+    sentences: normalizeSentences(input.sentences),
     level: input.level,
     prevLevel: 0,
     reviewCount: 0,
@@ -388,6 +404,7 @@ async function updateWord(id, patch) {
     word: word,
     wordLower: key,
     meaning: patch.meaning !== undefined ? String(patch.meaning).trim() : rec.meaning,
+    sentences: patch.sentences !== undefined ? normalizeSentences(patch.sentences) : (rec.sentences || []),
     level: patch.level !== undefined ? patch.level : rec.level,
     updatedAt: Date.now()
   }

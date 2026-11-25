@@ -69,6 +69,30 @@
         <view class="chip" wx:for="{{levels}}" wx:key="id" data-level="{{item.id}}" bindtap="pickFormLevel"
               style="{{formLevel === item.id ? 'background:' + item.color + ';border-color:' + item.color + ';color:#fff' : 'color:' + item.color + ';border-color:' + item.color}}">{{item.name}}</view>
       </view>
+      <view class="sen-head">
+        <text class="sen-head-label">例句<text wx:if="{{formSentences.length}}" class="sen-count">（{{formSentences.length}}）</text></text>
+        <view class="sen-add" catchtap="addSentence">＋</view>
+      </view>
+      <view class="sen-list">
+        <block wx:for="{{formSentences}}" wx:key="_k" wx:for-item="s">
+          <view class="sen-form-item" data-index="{{index}}" catchtap="editSentence">
+            <block wx:if="{{!s.editing}}">
+              <view class="sen-view" wx:if="{{s.en}}">{{s.en}}</view>
+              <view class="sen-view" wx:if="{{s.zh}}">{{s.zh}}</view>
+            </block>
+            <block wx:else>
+              <input class="sen-input" placeholder="英文例句" value="{{s.en}}"
+                     focus="{{senFocusIdx === index}}" data-index="{{index}}" catchtap="noop"
+                     bindinput="onSenEn" bindblur="doneSentence" bindfocus="cancelSenBlur" />
+              <input class="sen-input" placeholder="中文翻译" value="{{s.zh}}"
+                     data-index="{{index}}" catchtap="noop"
+                     bindinput="onSenZh" bindblur="doneSentence" bindfocus="cancelSenBlur" />
+              <view class="sen-del" data-index="{{index}}" catchtap="removeSentence">删除</view>
+            </block>
+          </view>
+        </block>
+        <view class="sen-empty" wx:if="{{!formSentences.length}}">还没有例句，点右上角 ＋ 添加</view>
+      </view>
       <view class="form-actions">
         <view class="form-btn" bindtap="closeForm">取消</view>
         <view class="form-btn form-btn-primary" bindtap="submitForm">保存</view>
@@ -100,23 +124,38 @@
 </view>
 
 <template name="word-item">
-  <view class="item" hover-class="item-hover" data-id="{{word._id}}" bindtap="onItemTap">
-    <view class="item-main">
-      <view class="item-word-row" wx:if="{{displayMode !== 'zh'}}">
-        <text class="item-word">{{word.word}}</text>
-        <text class="review-badge" wx:if="{{word.level === 1 && word.reviewCount > 0}}">×{{word.reviewCount}}</text>
+  <view class="item-wrap">
+    <view class="item" hover-class="item-hover" data-id="{{word._id}}" bindtap="onItemTap">
+      <view class="item-main">
+        <view class="item-word-row" wx:if="{{displayMode !== 'zh'}}">
+          <text class="item-word">{{word.word}}</text>
+          <text class="review-badge" wx:if="{{word.level === 1 && word.reviewCount > 0}}">×{{word.reviewCount}}</text>
+        </view>
+        <block wx:if="{{displayMode === 'zh'}}">
+          <view class="item-meaning item-meaning-main" wx:if="{{word.meaning}}">{{word.meaning}}</view>
+          <view class="item-meaning" wx:else>（未填释义）</view>
+        </block>
+        <view class="item-meaning" wx:elif="{{displayMode === 'both' && word.meaning}}">{{word.meaning}}</view>
       </view>
-      <block wx:if="{{displayMode === 'zh'}}">
-        <view class="item-meaning item-meaning-main" wx:if="{{word.meaning}}">{{word.meaning}}</view>
-        <view class="item-meaning" wx:else>（未填释义）</view>
-      </block>
-      <view class="item-meaning" wx:elif="{{displayMode === 'both' && word.meaning}}">{{word.meaning}}</view>
+      <view class="item-side">
+        <view class="item-time" wx:if="{{word.timeText}}">{{word.timeText}}</view>
+        <view class="origin-tag" wx:if="{{word.originName}}"
+              style="color: {{word.originColor}}; background: {{word.originBg}}">{{word.originName}}</view>
+        <view class="tag" style="color: {{word.levelColor}}; background: {{word.levelBg}}">{{word.levelName}}</view>
+      </view>
     </view>
-    <view class="item-side">
-      <view class="item-time" wx:if="{{word.timeText}}">{{word.timeText}}</view>
-      <view class="origin-tag" wx:if="{{word.originName}}"
-            style="color: {{word.originColor}}; background: {{word.originBg}}">{{word.originName}}</view>
-      <view class="tag" style="color: {{word.levelColor}}; background: {{word.levelBg}}">{{word.levelName}}</view>
+    <view class="sen-toggle" wx:if="{{word.senCount > 0}}" catchtap="toggleSentences" data-id="{{word._id}}">
+      <text>例句（{{word.senCount}}）</text>
+      <text class="sen-toggle-arrow {{word.senOpen ? 'sen-toggle-arrow-open' : ''}}">▾</text>
+    </view>
+    <view class="sen-block" wx:if="{{word.senOpen}}" catchtap="noop">
+      <block wx:for="{{word.sentences}}" wx:key="index" wx:for-item="s">
+        <view wx:if="{{!word.senHide[index]}}" class="sen-pair" catchtap="toggleSentenceHide" data-id="{{word._id}}" data-index="{{index}}">
+          <view class="sen-pair-en">{{s.en}}</view>
+          <view class="sen-pair-zh" wx:if="{{s.zh}}">{{s.zh}}</view>
+        </view>
+        <view wx:else class="sen-pair-min" catchtap="toggleSentenceHide" data-id="{{word._id}}" data-index="{{index}}">例句 {{index + 1}} ▸</view>
+      </block>
     </view>
   </view>
 </template>

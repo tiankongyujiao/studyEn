@@ -214,13 +214,16 @@
   padding: 8rpx 24rpx 160rpx;
 }
 
+.item-wrap {
+  margin-bottom: 16rpx;
+}
+
 .item {
   display: flex;
   align-items: center;
   background: #fff;
   border-radius: 16rpx;
   padding: 22rpx 28rpx;
-  margin-bottom: 16rpx;
 }
 
 .item-hover {
@@ -329,10 +332,12 @@
 
 .form {
   width: 640rpx;
+  max-height: 80vh;
   background: #fff;
   border-radius: 24rpx;
   padding: 40rpx 36rpx 32rpx;
   box-sizing: border-box;
+  overflow-y: scroll;
 }
 
 .form-title {
@@ -391,4 +396,125 @@
   background: #07c160;
   color: #fff;
   margin-left: 24rpx;
+}
+
+/* ---------- 弹框例句编辑 ---------- */
+
+.sen-head {
+  display: flex;
+  align-items: center;
+  margin: 8rpx 0 16rpx;
+}
+
+.sen-head-label {
+  font-size: 24rpx;
+  color: #969799;
+}
+
+.sen-count {
+  color: #c8c9cc;
+}
+
+.sen-add {
+  margin-left: auto;
+  width: 48rpx;
+  height: 48rpx;
+  line-height: 44rpx;
+  text-align: center;
+  border-radius: 50%;
+  background: #e9f8f0;
+  color: #07c160;
+  font-size: 32rpx;
+}
+
+.sen-list {
+  margin-bottom: 8rpx;
+}
+
+.sen-empty {
+  font-size: 24rpx;
+  color: #c8c9cc;
+  padding: 8rpx 0;
+}
+
+.sen-form-item {
+  background: #f5f6f7;
+  border-radius: 12rpx;
+  padding: 16rpx 20rpx;
+  margin-bottom: 16rpx;
+}
+
+.sen-view {
+  font-size: 26rpx;
+  color: #323233;
+  line-height: 1.5;
+}
+
+.sen-input {
+  height: 56rpx;
+  font-size: 26rpx;
+  margin-bottom: 8rpx;
+}
+
+.sen-del {
+  font-size: 24rpx;
+  color: #ee0a24;
+  padding: 8rpx 0 0;
+  text-align: right;
+}
+
+/* ---------- 列表例句展开 ---------- */
+
+.sen-toggle {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 28rpx;
+  font-size: 22rpx;
+  color: #969799;
+  border-top: 1rpx solid #f0f1f2;
+}
+
+.sen-toggle-arrow {
+  margin-left: 8rpx;
+  transition: transform 0.2s;
+}
+
+.sen-toggle-arrow-open {
+  display: inline-block;
+  transform: rotate(180deg);
+}
+
+.sen-block {
+  padding: 4rpx 28rpx 16rpx;
+  border-top: 1rpx solid #f0f1f2;
+  background: #fafbfc;
+}
+
+.sen-pair {
+  padding: 12rpx 16rpx;
+  margin-top: 12rpx;
+  background: #f5f6f7;
+  border-radius: 10rpx;
+}
+
+.sen-pair-en {
+  font-size: 28rpx;
+  color: #323233;
+  line-height: 1.5;
+}
+
+.sen-pair-zh {
+  font-size: 24rpx;
+  color: #969799;
+  margin-top: 2rpx;
+  line-height: 1.5;
+}
+
+.sen-pair-min {
+  font-size: 24rpx;
+  color: #c8c9cc;
+  padding: 12rpx 16rpx;
+  margin-top: 12rpx;
+  background: #f5f6f7;
+  border-radius: 10rpx;
 }
