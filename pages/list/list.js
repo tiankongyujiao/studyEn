@@ -571,7 +571,14 @@ Page({
   },
 
   pickSuggestion: function (e) {
-    this.setData({ formWord: e.currentTarget.dataset.word, suggestions: [] })
+    var word = e.currentTarget.dataset.word
+    var patch = { formWord: word, suggestions: [] }
+    // 编辑已有单词时不覆盖已填的释义；新增时若词库有释义且手填为空则自动填入
+    if (!this.data.editingId && !this.data.formMeaning) {
+      var hit = dict.lookup(word)
+      if (hit) patch.formMeaning = hit.meaning
+    }
+    this.setData(patch)
   },
 
   onFormMeaning: function (e) {

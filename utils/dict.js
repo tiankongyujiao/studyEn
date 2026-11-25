@@ -251,6 +251,30 @@ require('./dictData').split(/\s+/).forEach(function (w) {
   list.push(w)
 })
 
+// jiaci 开源词库补足（github.com/leoon-hu/jiaci）：考试/场景词表与短语，附释义供联想时自动填写
+// dictJiaci.js 为脚本生成物，每行「拼写|音标|释义」
+var jiaci = require('./dictJiaci')
+var meaningMap = {}
+
+function addJiaci(lines) {
+  lines.forEach(function (line) {
+    var p1 = line.indexOf('|')
+    if (p1 < 0) return
+    var w = line.slice(0, p1)
+    if (!w) return
+    // 小学词表 / dictData 里已有的词不重复进 list，但释义要补上（它们恰是最常用的词）
+    if (!seen[w]) {
+      seen[w] = true
+      list.push(w)
+    }
+    var p2 = line.indexOf('|', p1 + 1)
+    var tr = p2 >= 0 ? line.slice(p2 + 1) : ''
+    if (tr && !meaningMap[w]) meaningMap[w] = tr
+  })
+}
+addJiaci(jiaci.DATA)
+addJiaci(jiaci.PHRASES)
+
 // 返回以 prefix 开头的最多 limit 个词（按字母序）；无匹配返回空数组
 function suggest(prefix, limit) {
   var p = String(prefix || '').trim().toLowerCase()
@@ -265,6 +289,14 @@ function suggest(prefix, limit) {
   return out
 }
 
+// 查询内置词库的释义；查不到返回 null
+function lookup(word) {
+  var w = String(word || '').trim().toLowerCase()
+  if (!w) return null
+  return meaningMap[w] ? { meaning: meaningMap[w] } : null
+}
+
 module.exports = {
-  suggest: suggest
+  suggest: suggest,
+  lookup: lookup
 }
